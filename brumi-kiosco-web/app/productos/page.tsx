@@ -3,7 +3,7 @@
     import { useState, useEffect } from "react";
     import { databases, DATABASE_ID, COLLECTIONS } from "../../lib/appwrite";
     import { ID, Query } from "appwrite";
-    import { Plus, Trash2, ArrowLeft, Loader2, Upload, FileSpreadsheet, Search, CheckCircle, Moon, Sun } from "lucide-react";
+    import { Plus, Trash2, ArrowLeft, Loader2, Upload, FileSpreadsheet, Search, CheckCircle, Moon, Sun, Pencil, Check, X } from "lucide-react";
     import Link from "next/link";
 
     interface Proveedor {
@@ -38,11 +38,16 @@
     const [guardando, setGuardando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState("");
 
+    // Estados para Edición
+    const [editandoId, setEditandoId] = useState<string | null>(null);
+    const [editNombre, setEditNombre] = useState("");
+    const [editPrecio, setEditPrecio] = useState("");
+    const [editUnidad, setEditUnidad] = useState<"un" | "kg">("un");
+
     // Estado del Modo Oscuro
     const [modoOscuro, setModoOscuro] = useState(false);
 
     useEffect(() => {
-        // Verificar preferencia de tema guardada
         const temaGuardado = localStorage.getItem("brumi_tema");
         if (temaGuardado === "oscuro") {
         setModoOscuro(true);
@@ -191,6 +196,35 @@
         setProductos((prev) => prev.filter((p) => p.$id !== id));
         } catch (error) {
         console.error("Error al eliminar:", error);
+        }
+    };
+
+    const handleActualizar = async (id: string) => {
+        if (!editNombre.trim() || !editPrecio) return;
+        try {
+        const precioNum = parseFloat(editPrecio.toString().replace(",", "."));
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.PRODUCTOS,
+            id,
+            {
+            nombre: editNombre.trim(),
+            precio: precioNum,
+            unidad_medida: editUnidad,
+            }
+        );
+        
+        // Actualizamos la lista local
+        setProductos((prev) =>
+            prev.map((p) =>
+            p.$id === id ? { ...p, nombre: editNombre.trim(), precio: precioNum, unidad_medida: editUnidad } : p
+            )
+        );
+        setEditandoId(null);
+        mostrarAlerta("Producto actualizado correctamente");
+        } catch (error) {
+        console.error("Error al actualizar:", error);
+        alert("Hubo un error al actualizar el producto.");
         }
     };
 
@@ -389,24 +423,85 @@
                     <tbody className={`divide-y ${modoOscuro ? "divide-gray-800" : "divide-gray-50"}`}>
                     {productosFiltrados.map((item) => (
                         <tr key={item.$id} className={`transition ${modoOscuro ? "hover:bg-gray-800/50" : "hover:bg-gray-50/50"}`}>
-                        <td className={`py-3 font-medium ${modoOscuro ? "text-gray-200" : "text-gray-800"}`}>{item.nombre}</td>
-                        <td className="py-3 text-center">
-                            <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${
-                            item.unidad_medida === "kg" 
-                                ? modoOscuro ? "bg-amber-900/30 text-amber-400" : "bg-amber-100 text-amber-700" 
-                                : modoOscuro ? "bg-blue-900/30 text-blue-400" : "bg-blue-100 text-blue-700"
-                            }`}>
-                            {item.unidad_medida || "un"}
-                            </span>
-                        </td>
-                        <td className={`py-3 text-right font-bold ${modoOscuro ? "text-white" : "text-gray-900"}`}>
-                            ${item.precio.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="py-3 text-right">
-                            <button onClick={() => handleEliminar(item.$id)} className={`transition p-1 ${modoOscuro ? "text-gray-500 hover:text-red-400" : "text-gray-400 hover:text-red-600"}`}>
-                            <Trash2 size={16} />
-                            </button>
-                        </td>
+                        
+                        {editandoId === item.$id ? (
+                            <>
+                            <td className="py-2 pr-2">
+                                <input
+                                type="text"
+                                value={editNombre}
+                                onChange={(e) => setEditNombre(e.target.value)}
+                                className={`w-full px-3 py-1.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${modoOscuro ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
+                                placeholder="Nombre"
+                                />
+                            </td>
+                            <td className="py-2 px-2 text-center">
+                                <select
+                                value={editUnidad}
+                                onChange={(e) => setEditUnidad(e.target.value as "un" | "kg")}
+                                className={`w-full px-2 py-1.5 rounded-lg border text-xs font-bold uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 ${modoOscuro ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
+                                >
+                                <option value="un">UN</option>
+                                <option value="kg">KG</option>
+                                </select>
+                            </td>
+                            <td className="py-2 px-2 text-right">
+                                <input
+                                type="number"
+                                step="0.01"
+                                value={editPrecio}
+                                onChange={(e) => setEditPrecio(e.target.value)}
+                                className={`w-28 ml-auto px-3 py-1.5 rounded-lg border text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500 ${modoOscuro ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
+                                placeholder="Precio"
+                                />
+                            </td>
+                            <td className="py-2 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                <button onClick={() => handleActualizar(item.$id)} className="p-1.5 transition text-green-500 hover:text-green-400" title="Guardar">
+                                    <Check size={18} />
+                                </button>
+                                <button onClick={() => setEditandoId(null)} className="p-1.5 transition text-red-500 hover:text-red-400" title="Cancelar">
+                                    <X size={18} />
+                                </button>
+                                </div>
+                            </td>
+                            </>
+                        ) : (
+                            <>
+                            <td className={`py-3 font-medium ${modoOscuro ? "text-gray-200" : "text-gray-800"}`}>{item.nombre}</td>
+                            <td className="py-3 text-center">
+                                <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${
+                                item.unidad_medida === "kg" 
+                                    ? modoOscuro ? "bg-amber-900/30 text-amber-400" : "bg-amber-100 text-amber-700" 
+                                    : modoOscuro ? "bg-blue-900/30 text-blue-400" : "bg-blue-100 text-blue-700"
+                                }`}>
+                                {item.unidad_medida || "un"}
+                                </span>
+                            </td>
+                            <td className={`py-3 text-right font-bold ${modoOscuro ? "text-white" : "text-gray-900"}`}>
+                                ${item.precio.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-3 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                <button 
+                                    onClick={() => {
+                                    setEditandoId(item.$id);
+                                    setEditNombre(item.nombre);
+                                    setEditPrecio(item.precio.toString());
+                                    setEditUnidad((item.unidad_medida as "un" | "kg") || "un");
+                                    }} 
+                                    className={`transition p-1.5 ${modoOscuro ? "text-gray-500 hover:text-blue-400" : "text-gray-400 hover:text-blue-600"}`}
+                                    title="Editar producto"
+                                >
+                                    <Pencil size={18} />
+                                </button>
+                                <button onClick={() => handleEliminar(item.$id)} className={`transition p-1.5 ${modoOscuro ? "text-gray-500 hover:text-red-400" : "text-gray-400 hover:text-red-600"}`} title="Eliminar producto">
+                                    <Trash2 size={18} />
+                                </button>
+                                </div>
+                            </td>
+                            </>
+                        )}
                         </tr>
                     ))}
                     </tbody>

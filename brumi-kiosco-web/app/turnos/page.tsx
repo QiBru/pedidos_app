@@ -113,6 +113,7 @@
         });
     };
 
+    // Función para ocultar/mostrar un empleado
     const toggleVisibilidadFila = (index: number) => {
         const estadoActual = horarios[index].visible !== false;
         actualizarHorario(index, "visible", !estadoActual);
@@ -310,12 +311,15 @@
 
             {/* --- MÓDULO 1: CRONOGRAMA SEMANAL --- */}
             <div className={`rounded-2xl p-6 shadow-sm border mb-8 ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
-                <h2 className={`text-lg font-bold flex items-center gap-2 ${modoOscuro ? "text-white" : "text-gray-800"}`}>
+            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 mb-6">
+                <h2 className={`text-lg font-bold flex items-center gap-2 mt-2 ${modoOscuro ? "text-white" : "text-gray-800"}`}>
                 <Clock size={20} className="text-orange-500"/> Cronograma Semanal
                 </h2>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                {/* Agrupamos los dos filtros (Días y Empleados) en una columna para que se vean prolijos */}
+                <div className="flex flex-col items-start xl:items-end gap-3 w-full xl:w-auto">
+                
+                {/* Filtro de Días */}
                 <div className={`flex items-center flex-wrap gap-2 p-2 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
                     <span className={`text-xs font-bold uppercase mr-2 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
                     <Eye size={14} /> Días:
@@ -334,6 +338,27 @@
                     </button>
                     ))}
                 </div>
+
+                {/* Filtro de Trabajadores */}
+                <div className={`flex items-center flex-wrap gap-2 p-2 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                    <span className={`text-xs font-bold uppercase mr-2 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
+                    <UserCheck size={14} /> Empleados:
+                    </span>
+                    {horarios.map((fila, index) => (
+                    <button
+                        key={index}
+                        onClick={() => toggleVisibilidadFila(index)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        fila.visible !== false
+                            ? modoOscuro ? "bg-blue-900/40 text-blue-400 border border-blue-800" : "bg-blue-100 text-blue-800 border border-blue-200"
+                            : modoOscuro ? "bg-gray-800 text-gray-500 border border-gray-700 line-through opacity-70" : "bg-white text-gray-400 border border-gray-200 line-through opacity-70"
+                        }`}
+                    >
+                        {fila.trabajador || `Nuevo ${index + 1}`}
+                    </button>
+                    ))}
+                </div>
+
                 </div>
             </div>
             
