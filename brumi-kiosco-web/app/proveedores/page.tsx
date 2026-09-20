@@ -3,7 +3,7 @@
     import { useState, useEffect } from "react";
     import { databases, DATABASE_ID, COLLECTIONS } from "../../lib/appwrite";
     import { ID, Query } from "appwrite";
-    import { Plus, Phone, Trash2, ArrowLeft, Loader2, Moon, Sun } from "lucide-react";
+    import { Plus, Phone, Trash2, ArrowLeft, Loader2, Moon, Sun, Pencil, Check, X } from "lucide-react";
     import Link from "next/link";
 
     interface Proveedor {
@@ -19,10 +19,13 @@
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     
-    // Estado del Modo Oscuro
+    // 1. Estados para el modo edición
+    const [editandoId, setEditandoId] = useState<string | null>(null);
+    const [editNombre, setEditNombre] = useState("");
+    const [editTelefono, setEditTelefono] = useState("");
+
     const [modoOscuro, setModoOscuro] = useState(false);
 
-    // 1. Cargar la lista al entrar y verificar modo oscuro
     useEffect(() => {
         const temaGuardado = localStorage.getItem("brumi_tema");
         if (temaGuardado === "oscuro") {
@@ -53,7 +56,6 @@
         }
     };
 
-    // 2. Guardar un nuevo proveedor
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!nombre.trim()) return;
@@ -81,7 +83,6 @@
         }
     };
 
-    // 3. Eliminar proveedor
     const handleEliminar = async (id: string) => {
         if (!confirm("¿Seguro que querés eliminar este proveedor?")) return;
         try {
@@ -89,6 +90,33 @@
         setProveedores((prev) => prev.filter((p) => p.$id !== id));
         } catch (error) {
         console.error("Error al eliminar:", error);
+        }
+    };
+
+    // 2. Función para guardar los cambios editados
+    const handleActualizar = async (id: string) => {
+        if (!editNombre.trim()) return;
+        try {
+        await databases.updateDocument(
+            DATABASE_ID,
+            COLLECTIONS.PROVEEDORES,
+            id,
+            {
+            nombre: editNombre.trim(),
+            telefono: editTelefono.trim() || null,
+            }
+        );
+        
+        // Actualizamos la lista local
+        setProveedores((prev) =>
+            prev.map((p) =>
+            p.$id === id ? { ...p, nombre: editNombre.trim(), telefono: editTelefono.trim() || undefined } : p
+            )
+        );
+        setEditandoId(null);
+        } catch (error) {
+        console.error("Error al actualizar:", error);
+        alert("Hubo un error al actualizar el proveedor.");
         }
     };
 
@@ -185,22 +213,78 @@
             ) : (
                 <div className={`divide-y ${modoOscuro ? "divide-gray-800" : "divide-gray-100"}`}>
                 {proveedores.map((p) => (
-                    <div key={p.$id} className="py-3 flex items-center justify-between">
-                    <div>
+                    <div key={p.$id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    
+                    {editandoId === p.$id ? (
+                        /* 3. Vista de Modo Edición */
+                        <div className="flex flex-1 flex-col sm:flex-row gap-2">
+                        <input
+                            type="text"
+                            value={editNombre}
+                            onChange={(e) => setEditNombre(e.target.value)}
+                            className={`flex-1 px-3 py-1.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${modoOscuro ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-900"}`}
+                            placeholder="Nombre de la empresa"
+                        />
+                        <input
+                            type="text"
+                            value={editTelefono}
+                            onChange={(e) => setEditTelefono(e.target.value)}
+                            className={`w-full sm:w-40 px-3 py-1.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${modoOscuro ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-900"}`}
+                            placeholder="Teléfono"
+                        />
+                        </div>
+                    ) : (
+                        /* Vista Normal */
+                        <div className="flex-1">
                         <p className={`font-semibold ${modoOscuro ? "text-gray-200" : "text-gray-800"}`}>{p.nombre}</p>
                         {p.telefono && (
-                        <p className={`text-xs flex items-center gap-1 mt-0.5 ${modoOscuro ? "text-gray-400" : "text-gray-500"}`}>
+                            <p className={`text-xs flex items-center gap-1 mt-0.5 ${modoOscuro ? "text-gray-400" : "text-gray-500"}`}>
                             <Phone size={12} /> {p.telefono}
-                        </p>
+                            </p>
+                        )}
+                        </div>
+                    )}
+
+                    {/* 4. Botones Laterales */}
+                    <div className="flex items-center justify-end gap-1">
+                        {editandoId === p.$id ? (                       <>                         <button                           onClick={() => handleActualizar(p.$id)}
+                            className="p-2 transition text-green-500 hover:text-green-400"
+                            title="Guardar cambios"
+                            >
+                            <Check size={18} />
+                            </button>
+                            <button
+                            onClick={() => setEditandoId(null)}
+                            className="p-2 transition text-red-500 hover:text-red-400"
+                            title="Cancelar"
+                            >
+                            <X size={18} />
+                            </button>
+                        </>
+                        ) : (
+                        <>
+                            <button
+                            onClick={() => {
+                                setEditandoId(p.$id);
+                                setEditNombre(p.nombre);
+                                setEditTelefono(p.telefono || "");
+                            }}
+                            className={`p-2 transition ${modoOscuro ? "text-gray-500 hover:text-blue-400" : "text-gray-400 hover:text-blue-600"}`}
+                            title="Editar proveedor"
+                            >
+                            <Pencil size={18} />
+                            </button>
+                            <button
+                            onClick={() => handleEliminar(p.$id)}
+                            className={`p-2 transition ${modoOscuro ? "text-gray-500 hover:text-red-400" : "text-gray-400 hover:text-red-600"}`}
+                            title="Eliminar proveedor"
+                            >
+                            <Trash2 size={18} />
+                            </button>
+                        </>
                         )}
                     </div>
-                    <button
-                        onClick={() => handleEliminar(p.$id)}
-                        className={`p-2 transition ${modoOscuro ? "text-gray-500 hover:text-red-400" : "text-gray-400 hover:text-red-600"}`}
-                        title="Eliminar proveedor"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+
                     </div>
                 ))}
                 </div>
