@@ -3,7 +3,7 @@
     import { useState, useEffect } from "react";
     import { databases, DATABASE_ID, COLLECTIONS } from "../../lib/appwrite";
     import { ID, Query } from "appwrite";
-    import { ArrowLeft, Loader2, DollarSign, Calendar, CheckCircle, UserCheck, Trash2, FileText, Plus, Edit2, Check, X, Clock, EyeOff, Eye, Moon, Sun, Info } from "lucide-react";
+    import { ArrowLeft, Loader2, DollarSign, Calendar, CheckCircle, UserCheck, Trash2, FileText, Plus, Check, X, Clock, EyeOff, Eye, Moon, Sun, Info } from "lucide-react";
     import Link from "next/link";
 
     interface RegistroSueldo {
@@ -53,9 +53,7 @@
     const [nuevoNombre, setNuevoNombre] = useState("");
     const [nuevoSueldoBase, setNuevoSueldoBase] = useState<number | "">(3000);
     const [mostrarFormNuevo, setMostrarFormNuevo] = useState(false);
-    const [editandoId, setEditandoId] = useState<string | null>(null);
-    const [nombreTemporal, setNombreTemporal] = useState("");
-
+    
     const [guardando, setGuardando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState("");
 
@@ -64,7 +62,6 @@
     const [filtroFecha, setFiltroFecha] = useState<string>("hoy");
     const [fechaExacta, setFechaExacta] = useState<string>("");
 
-    // ESTADO PARA ALERTAS Y CONFIRMACIONES PROPIAS
     const [alerta, setAlerta] = useState({ abierto: false, mensaje: "", tipo: "info", accionConfirmar: null as any });
 
     const mostrarAlerta = (mensaje: string) => {
@@ -113,7 +110,6 @@
         });
     };
 
-    // Función para ocultar/mostrar un empleado
     const toggleVisibilidadFila = (index: number) => {
         const estadoActual = horarios[index].visible !== false;
         actualizarHorario(index, "visible", !estadoActual);
@@ -143,31 +139,6 @@
 
     const actualizarFilaSueldo = (id: string, campo: keyof EmpleadoPlanilla, valor: any) => {
         setPlanilla(prev => prev.map(emp => (emp.id === id ? { ...emp, [campo]: valor } : emp)));
-    };
-
-    const agregarEmpleado = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!nuevoNombre.trim()) return;
-        const nuevo: EmpleadoPlanilla = { id: Date.now().toString(), nombre: nuevoNombre.trim(), horas: "", descuento: "", sueldoHora: Number(nuevoSueldoBase) || 3000, pagado: true };
-        setPlanilla([...planilla, nuevo]);
-        setNuevoNombre("");
-        setMostrarFormNuevo(false);
-    };
-
-    const eliminarEmpleadoPlanilla = (id: string) => {
-        if (planilla.length <= 1) return mostrarAlerta("Debe quedar al menos un empleado en la planilla.");
-        setPlanilla(planilla.filter(emp => emp.id !== id));
-    };
-
-    const iniciarEdicionNombre = (emp: EmpleadoPlanilla) => {
-        setEditandoId(emp.id);
-        setNombreTemporal(emp.nombre);
-    };
-
-    const guardarEdicionNombre = (id: string) => {
-        if (!nombreTemporal.trim()) return;
-        setPlanilla(prev => prev.map(emp => (emp.id === id ? { ...emp, nombre: nombreTemporal.trim() } : emp)));
-        setEditandoId(null);
     };
 
     const calcularTotalFila = (item: EmpleadoPlanilla) => {
@@ -241,7 +212,7 @@
     });
 
     return (
-        <div className={`min-h-screen p-6 md:p-10 font-sans transition-colors duration-300 ${modoOscuro ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"}`}>
+        <div className={`min-h-screen p-4 md:p-10 font-sans transition-colors duration-300 ${modoOscuro ? "bg-gray-950 text-gray-100" : "bg-gray-50 text-gray-800"}`}>
         
         {/* CUADRO DE DIÁLOGO PERSONALIZADO */}
         {alerta.abierto && (
@@ -259,24 +230,15 @@
                 
                 {alerta.tipo === "confirmacion" ? (
                 <div className="flex gap-3 w-full">
-                    <button
-                    onClick={() => setAlerta({ abierto: false, mensaje: "", tipo: "info", accionConfirmar: null })}
-                    className={`w-full font-bold py-3 px-4 rounded-xl transition ${modoOscuro ? "bg-gray-800 text-gray-300 hover:bg-gray-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                    >
+                    <button onClick={() => setAlerta({ abierto: false, mensaje: "", tipo: "info", accionConfirmar: null })} className={`w-full font-bold py-3 px-4 rounded-xl transition ${modoOscuro ? "bg-gray-800 text-gray-300 hover:bg-gray-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
                     Cancelar
                     </button>
-                    <button
-                    onClick={alerta.accionConfirmar}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm"
-                    >
+                    <button onClick={alerta.accionConfirmar} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
                     Sí, Eliminar
                     </button>
                 </div>
                 ) : (
-                <button
-                    onClick={() => setAlerta({ abierto: false, mensaje: "", tipo: "info", accionConfirmar: null })}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm"
-                >
+                <button onClick={() => setAlerta({ abierto: false, mensaje: "", tipo: "info", accionConfirmar: null })} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm">
                     Aceptar
                 </button>
                 )}
@@ -285,50 +247,44 @@
         )}
 
         <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center justify-between gap-4 mb-6">
             <div>
                 <Link href="/" className={`flex items-center gap-2 text-sm font-semibold transition mb-2 ${modoOscuro ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-800"}`}>
                 <ArrowLeft size={18} /> Volver al Inicio
                 </Link>
-                <h1 className={`text-2xl font-bold ${modoOscuro ? "text-white" : "text-gray-900"}`}>Control de Turnos y Sueldos</h1>
+                <h1 className={`text-xl md:text-2xl font-bold ${modoOscuro ? "text-white" : "text-gray-900"}`}>Turnos y Sueldos</h1>
             </div>
             
-            <button
-                onClick={toggleModoOscuro}
-                className={`p-2.5 rounded-xl border shadow-sm flex items-center justify-center transition-all ${
-                modoOscuro ? "bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-100"
-                }`}
-            >
+            <button onClick={toggleModoOscuro} className={`p-2.5 rounded-xl border shadow-sm flex items-center justify-center transition-all ${modoOscuro ? "bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-100"}`}>
                 {modoOscuro ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             </div>
 
             {mensajeExito && (
-            <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 font-medium shadow-sm border ${modoOscuro ? "bg-green-900/30 border-green-800 text-green-400" : "bg-green-50 border-green-200 text-green-700"}`}>
+            <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 font-medium shadow-sm border text-sm ${modoOscuro ? "bg-green-900/30 border-green-800 text-green-400" : "bg-green-50 border-green-200 text-green-700"}`}>
                 <CheckCircle size={20} /> {mensajeExito}
             </div>
             )}
 
             {/* --- MÓDULO 1: CRONOGRAMA SEMANAL --- */}
-            <div className={`rounded-2xl p-6 shadow-sm border mb-8 ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
+            <div className={`rounded-2xl p-4 md:p-6 shadow-sm border mb-8 ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
             <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 mb-6">
                 <h2 className={`text-lg font-bold flex items-center gap-2 mt-2 ${modoOscuro ? "text-white" : "text-gray-800"}`}>
                 <Clock size={20} className="text-orange-500"/> Cronograma Semanal
                 </h2>
 
-                {/* Agrupamos los dos filtros (Días y Empleados) en una columna para que se vean prolijos */}
                 <div className="flex flex-col items-start xl:items-end gap-3 w-full xl:w-auto">
                 
-                {/* Filtro de Días */}
-                <div className={`flex items-center flex-wrap gap-2 p-2 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
-                    <span className={`text-xs font-bold uppercase mr-2 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
+                {/* Filtro de Días Responsivo */}
+                <div className={`flex items-center flex-wrap gap-1.5 p-2 rounded-xl border w-full ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                    <span className={`text-[10px] sm:text-xs font-bold uppercase mr-1 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
                     <Eye size={14} /> Días:
                     </span>
                     {diasDeLaSemana.map((dia) => (
                     <button
                         key={dia.key}
                         onClick={() => toggleDiaVisible(dia.key as keyof typeof diasVisibles)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
                         diasVisibles[dia.key as keyof typeof diasVisibles]
                             ? modoOscuro ? "bg-orange-900/40 text-orange-400 border border-orange-800" : "bg-orange-100 text-orange-800 border border-orange-200"
                             : modoOscuro ? "bg-gray-800 text-gray-500 border border-gray-700 line-through opacity-70" : "bg-white text-gray-400 border border-gray-200 line-through opacity-70"
@@ -339,16 +295,16 @@
                     ))}
                 </div>
 
-                {/* Filtro de Trabajadores */}
-                <div className={`flex items-center flex-wrap gap-2 p-2 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
-                    <span className={`text-xs font-bold uppercase mr-2 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
+                {/* Filtro de Trabajadores Responsivo */}
+                <div className={`flex items-center flex-wrap gap-1.5 p-2 rounded-xl border w-full ${modoOscuro ? "bg-gray-800/50 border-gray-700" : "bg-gray-50 border-gray-100"}`}>
+                    <span className={`text-[10px] sm:text-xs font-bold uppercase mr-1 flex items-center gap-1 ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>
                     <UserCheck size={14} /> Empleados:
                     </span>
                     {horarios.map((fila, index) => (
                     <button
                         key={index}
                         onClick={() => toggleVisibilidadFila(index)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all ${
                         fila.visible !== false
                             ? modoOscuro ? "bg-blue-900/40 text-blue-400 border border-blue-800" : "bg-blue-100 text-blue-800 border border-blue-200"
                             : modoOscuro ? "bg-gray-800 text-gray-500 border border-gray-700 line-through opacity-70" : "bg-white text-gray-400 border border-gray-200 line-through opacity-70"
@@ -362,8 +318,9 @@
                 </div>
             </div>
             
-            <div className={`overflow-x-auto rounded-xl border ${modoOscuro ? "border-gray-800" : "border-orange-100"}`}>
-                <table className="w-full text-center text-sm border-collapse">
+            {/* TABLA HORARIOS: Se fuerza un min-w-[900px] para que se pueda deslizar en celulares sin aplastarse */}
+            <div className={`overflow-x-auto rounded-xl border scrollbar-hide ${modoOscuro ? "border-gray-800" : "border-orange-100"}`}>
+                <table className="w-full min-w-[900px] text-center text-sm border-collapse">
                 <thead>
                     <tr className={`uppercase text-xs font-bold ${modoOscuro ? "bg-gray-800/50 text-orange-400" : "bg-orange-100 text-orange-900"}`}>
                     <th className={`p-3 border-b text-left ${modoOscuro ? "border-gray-700" : "border-orange-100"}`}>Trabajadores</th>
@@ -421,18 +378,16 @@
             </div>
 
             {/* --- MÓDULO 2: PLANILLA DE PAGOS DIARIA --- */}
-            <div className={`rounded-2xl p-6 shadow-sm border mb-10 ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className={`rounded-2xl p-4 md:p-6 shadow-sm border mb-10 ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <h2 className={`text-lg font-bold flex items-center gap-2 ${modoOscuro ? "text-white" : "text-gray-800"}`}>
-                <UserCheck size={20} className="text-blue-500"/> Planilla de Pagos Diaria
+                <UserCheck size={20} className="text-blue-500"/> Planilla Diaria
                 </h2>
-                <button onClick={() => setMostrarFormNuevo(!mostrarFormNuevo)} className={`font-semibold py-2 px-4 rounded-xl text-xs flex items-center gap-2 transition ${modoOscuro ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-gray-900 hover:bg-gray-800 text-white"}`}>
-                <Plus size={16} /> Agregar Empleado a Pagos
-                </button>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+            {/* TABLA PLANILLA: Se fuerza min-w-[800px] */}
+            <div className="overflow-x-auto pb-2 scrollbar-hide">
+                <table className="w-full min-w-[800px] text-left text-sm">
                 <thead>
                     <tr className={`border-b uppercase text-xs ${modoOscuro ? "border-gray-800 text-gray-500" : "border-gray-100 text-gray-400"}`}>
                     <th className="pb-3 font-semibold">Empleado</th>
@@ -451,13 +406,13 @@
                         <tr key={item.id} className={`transition ${modoOscuro ? "hover:bg-gray-800/50" : "hover:bg-gray-50/50"}`}>
                         <td className={`py-3 font-bold ${modoOscuro ? "text-gray-200" : "text-gray-800"}`}>{item.nombre}</td>
                         <td className="py-3 text-center">
-                            <input type="number" step="any" min="0" value={item.horas} onChange={(e) => actualizarFilaSueldo(item.id, "horas", e.target.value === "" ? "" : Number(e.target.value))} className={`w-16 text-center px-2 py-1.5 rounded-lg border focus:outline-none font-bold ${modoOscuro ? "bg-gray-800 border-gray-700 text-white focus:ring-blue-500" : "bg-white border-gray-200 text-gray-900 focus:ring-blue-500"}`} />
+                            <input type="number" step="any" min="0" value={item.horas} onChange={(e) => actualizarFilaSueldo(item.id, "horas", e.target.value === "" ? "" : Number(e.target.value))} className={`w-20 text-center px-2 py-1.5 rounded-lg border focus:outline-none font-bold ${modoOscuro ? "bg-gray-800 border-gray-700 text-white focus:ring-blue-500" : "bg-white border-gray-200 text-gray-900 focus:ring-blue-500"}`} />
                         </td>
                         <td className="py-3 text-center">
-                            <input type="number" step="any" min="0" value={item.descuento} onChange={(e) => actualizarFilaSueldo(item.id, "descuento", e.target.value === "" ? "" : Number(e.target.value))} className={`w-20 text-center px-2 py-1.5 rounded-lg border focus:outline-none ${modoOscuro ? "bg-gray-800 border-gray-700 text-gray-300 focus:ring-blue-500" : "bg-white border-gray-200 text-gray-600 focus:ring-blue-500"}`} />
+                            <input type="number" step="any" min="0" value={item.descuento} onChange={(e) => actualizarFilaSueldo(item.id, "descuento", e.target.value === "" ? "" : Number(e.target.value))} className={`w-24 text-center px-2 py-1.5 rounded-lg border focus:outline-none ${modoOscuro ? "bg-gray-800 border-gray-700 text-gray-300 focus:ring-blue-500" : "bg-white border-gray-200 text-gray-600 focus:ring-blue-500"}`} />
                         </td>
                         <td className="py-3 text-center">
-                            <input type="number" step="any" min="0" value={item.sueldoHora} onChange={(e) => actualizarFilaSueldo(item.id, "sueldoHora", e.target.value === "" ? "" : Number(e.target.value))} className={`w-24 text-center px-2 py-1.5 rounded-lg border focus:outline-none font-semibold ${modoOscuro ? "bg-gray-800 border-gray-700 text-gray-300 focus:ring-blue-500" : "bg-white border-gray-200 text-gray-700 focus:ring-blue-500"}`} />
+                            <input type="number" step="any" min="0" value={item.sueldoHora} onChange={(e) => actualizarFilaSueldo(item.id, "sueldoHora", e.target.value === "" ? "" : Number(e.target.value))} className={`w-28 text-center px-2 py-1.5 rounded-lg border focus:outline-none font-semibold ${modoOscuro ? "bg-gray-800 border-gray-700 text-gray-300 focus:ring-blue-500" : "bg-white border-gray-200 text-gray-700 focus:ring-blue-500"}`} />
                         </td>
                         <td className={`py-3 text-right font-bold text-base ${modoOscuro ? "text-white" : "text-gray-900"}`}>
                             ${Number(totalFila || 0).toLocaleString("es-AR")}
@@ -469,7 +424,7 @@
                             </select>
                         </td>
                         <td className="py-3 text-right">
-                            <button onClick={() => eliminarEmpleadoPlanilla(item.id)} className="text-gray-400 hover:text-red-500 transition p-1"><Trash2 size={16} /></button>
+                            {/* Como son datos fijos, quitamos la acción de borrar para evitar errores visuales o lo dejamos inactivo */}
                         </td>
                         </tr>
                     );
@@ -479,7 +434,7 @@
             </div>
 
             <div className={`mt-6 pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-xl ${modoOscuro ? "bg-gray-800/50 border-gray-800" : "bg-gray-50 border-gray-100"}`}>
-                <div>
+                <div className="w-full md:w-auto text-center md:text-left">
                 <span className={`text-xs font-bold uppercase block ${modoOscuro ? "text-gray-500" : "text-gray-400"}`}>Total a pagar del día</span>
                 <span className={`text-3xl font-extrabold ${modoOscuro ? "text-white" : "text-gray-900"}`}>${Number(totalDiaGlobal || 0).toLocaleString("es-AR")}</span>
                 </div>
@@ -489,35 +444,33 @@
             </div>
             </div>
 
-            {/* --- MÓDULO 3: HISTORIAL CON SELECTOR DE FECHA --- */}
-            <div className={`rounded-2xl p-6 shadow-sm border transition-colors ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
+            {/* --- MÓDULO 3: HISTORIAL --- */}
+            <div className={`rounded-2xl p-4 md:p-6 shadow-sm border transition-colors ${modoOscuro ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"}`}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
                 <h2 className={`text-lg font-bold flex items-center gap-2 ${modoOscuro ? "text-white" : "text-gray-800"}`}>
-                    <FileText size={20} className="text-blue-500"/> Historial de Sueldos Pagados
+                <FileText size={20} className="text-blue-500"/> Historial de Sueldos Pagados
                 </h2>
-                </div>
             </div>
 
-            <div className={`flex flex-wrap items-center gap-2 mb-6 p-3 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-800" : "bg-gray-50 border-gray-100"}`}>
-                <button onClick={() => setFiltroFecha("hoy")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "hoy" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
+            <div className={`flex flex-wrap items-center gap-2 mb-6 p-2 sm:p-3 rounded-xl border ${modoOscuro ? "bg-gray-800/50 border-gray-800" : "bg-gray-50 border-gray-100"}`}>
+                <button onClick={() => setFiltroFecha("hoy")} className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "hoy" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
                 Hoy
                 </button>
-                <button onClick={() => setFiltroFecha("semana")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "semana" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
+                <button onClick={() => setFiltroFecha("semana")} className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "semana" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
                 Últimos 7 días
                 </button>
-                <button onClick={() => setFiltroFecha("mes")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "mes" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
+                <button onClick={() => setFiltroFecha("mes")} className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "mes" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
                 Este Mes
                 </button>
-                <button onClick={() => setFiltroFecha("todos")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "todos" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
+                <button onClick={() => setFiltroFecha("todos")} className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${filtroFecha === "todos" ? "bg-blue-600 text-white shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"}`}>
                 Todos
                 </button>
                 
                 <div className={`h-4 w-px mx-2 hidden sm:block ${modoOscuro ? "bg-gray-700" : "bg-gray-300"}`}></div>
                 
-                <label className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${filtroFecha === "exacta" ? "bg-blue-600 text-white border-blue-600 shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
+                <label className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer mt-2 sm:mt-0 w-full sm:w-auto ${filtroFecha === "exacta" ? "bg-blue-600 text-white border-blue-600 shadow-sm" : modoOscuro ? "bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100"}`}>
                 <Calendar size={14}/> 
-                <span className={filtroFecha === "exacta" ? "text-white" : modoOscuro ? "text-gray-400" : "text-gray-500"}>Elegir Día:</span>
+                <span className={filtroFecha === "exacta" ? "text-white" : modoOscuro ? "text-gray-400" : "text-gray-500"}>Día:</span>
                 <input
                     type="date"
                     value={fechaExacta}
@@ -525,7 +478,7 @@
                     setFiltroFecha("exacta");
                     setFechaExacta(e.target.value);
                     }}
-                    className={`outline-none cursor-pointer text-xs font-bold ${filtroFecha === "exacta" ? "bg-transparent text-white" : "bg-transparent " + (modoOscuro ? "text-gray-200" : "text-gray-800")}`}
+                    className={`outline-none cursor-pointer text-xs font-bold bg-transparent w-full ${filtroFecha === "exacta" ? "text-white" : modoOscuro ? "text-gray-200" : "text-gray-800"}`}
                     style={modoOscuro && filtroFecha !== "exacta" ? { colorScheme: "dark" } : {}}
                 />
                 </label>
@@ -540,8 +493,8 @@
                 No hay registros de sueldos en la fecha seleccionada.
                 </p>
             ) : (
-                <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <div className="overflow-x-auto pb-2 scrollbar-hide">
+                <table className="w-full min-w-[900px] text-left text-sm">
                     <thead>
                     <tr className={`border-b uppercase text-xs ${modoOscuro ? "border-gray-800 text-gray-500" : "border-gray-100 text-gray-400"}`}>
                         <th className="pb-3 font-semibold">Empleado</th>
